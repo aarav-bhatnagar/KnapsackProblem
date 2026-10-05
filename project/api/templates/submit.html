@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<title>Submitted</title>
+{% endblock %}
+
+{% block body %}
+<h1>{{ Data['approach'] }} (Result Data)</h1> <!--Name of the algorithm-->
+<div class="row">
+    <div class="column3">
+        <div id="result_data">
+            <strong>Value: </strong> {{ Data['total_value'] }} <!--Value of solution-->
+            <br>
+            <strong>Weight: </strong> {{ Data['total_weight'] }} <!--Weight of solution-->
+            <br>
+            <strong>Valid: </strong> {{ Data['valid'] }} <!--As a debugging check to test if the solution is valid-->
+            <br>
+            <strong>Time(s): </strong> {{ Data['time'] }} <!--Execution time-->
+            <br>
+            <strong>Items (w<sub>i</sub>, v<sub>i</sub>) included: </strong>
+            <br>
+            <div class="scroll-box">
+                <!--All items in binary_string that are '1'-->
+                {% for i in range(Data['binary_string']|length) %}
+                    {% if Data['binary_string'][i] == '1': %}
+                        <div class="item">Item {{ i + 1 }}: ({{ Data['weights'][i] }}, {{ Data['values'][i] }})</div> 
+                    {% endif %}
+                {% endfor %}
+            </div>
+            
+            <strong>Items code: </strong>
+            <br>
+            <div class="scroll-box-mini">
+                <!--Actual binary string returned by program-->
+                <div class="item">{{ Data['binary_string'] }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="column4">
+        <!--Change display output if it is plotted graph or DP table-->
+        {% if Data['approach'] == 'DP (Tabulation)': %}
+            <!--DP table description-->
+            <p>Below shows the first 250(Capacity/Columns) x 250(Items Included/Rows)  in the dp table as previously explained in the algorithm:</p>
+            <div id="canvas-container">
+                <canvas id="dp-canvas"></canvas>
+            </div>
+        {% else: %}
+            <div id="graphs">
+                <!--Insert encoded image-->
+                <img src="data:image/png;base64,{{ Data['r_fig'] }}" alt="graph1">
+                <!--Download image linked to the same source-->
+                <a id="download_button" href="data:image/png;base64,{{ Data['r_fig'] }}" download>Download Image</a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+<br>
+<script>
+    //parse json file
+    const dpData = JSON.parse('{{ Data["r_fig"]|safe }}');
+
+    const cellWidth = 40; //width of cell
+    const cellHeight = 20; //height of cell
+
+    //rows and cols may not be 250 if not maximised
+    const rows = dpData.length;
+    const cols = dpData[0].length;
+
+    const container = document.getElementById("canvas-container");
+    const canvas = document.getElementById("dp-canvas");
+    const ctx = canvas.getContext("2d");
+
+    //Set virtual canvas size
+    canvas.width = Math.min(cellWidth * cols, 10000);
+    canvas.height = Math.min(cellHeight * rows, 5000);
+
+    //console.log(canvas.width, canvas.height)
+
+    //Function that draws the current displayed output in the container
+    function drawVisible() {
+        const scrollTop = container.scrollTop;
+        const scrollLeft = container.scrollLeft;
+        const startRow = Math.floor(scrollTop / cellHeight);
+        const endRow = Math.min(rows, startRow + Math.ceil(container.clientHeight / cellHeight) + 1);
+        const startCol = Math.floor(scrollLeft / cellWidth);
+        const endCol = Math.min(cols, startCol + Math.ceil(container.clientWidth / cellWidth) + 1);
+        //clear output before drawing cells
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        //Ouput text format settings
+        ctx.font = "12px Arial";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        for (let r = startRow; r < endRow; r++) {
+            for (let c = startCol; c < endCol; c++) {
+                //x, y coordinates of the cell
+                const x = c * cellWidth;
+                const y = r * cellHeight;
+                //Draw the cells with appropriate colours
+                if (r === 0 || c === 0)
+                {
+                    ctx.fillStyle = "#fff";
+                    //Coloured Rectangle
+                    ctx.fillRect(x, y, cellWidth, cellHeight);
+                }
+                ctx.strokeStyle = "#000";
+                //Bordered Rectangle
+                ctx.strokeRect(x, y, cellWidth, cellHeight);
+                ctx.fillStyle = "#000";
+                if (!(r === 0 && c === 0))
+                {
+                    //Fill text with dp array
+                    ctx.fillText(dpData[r][c], x + cellWidth / 2, y + cellHeight / 2);
+                }
+                else
+                {
+                    //Top left cell should be unmarked
+                    ctx.fillText('#', x + cellWidth / 2, y + cellHeight / 2)
+                }
+            }
+        }
+    }
+
+    container.addEventListener("scroll", drawVisible);
+    drawVisible();
+</script>
+</body>
+</html>
+
+{% endblock %}

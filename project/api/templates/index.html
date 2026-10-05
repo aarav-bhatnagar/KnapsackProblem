@@ -1,0 +1,539 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<title>Knapsack Algorithm Learner Tool</title>
+
+<script>
+//Math notation should be displayed on the left of the display
+window.MathJax = {
+  chtml: {
+    displayAlign: "left",
+    displayIndent: "0"
+  }
+};
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+
+{% endblock %}
+
+{% block body %}
+
+<div id="title">
+    <!--Title and Title Image-->
+    <img src="{{ url_for('static', filename='images/KnapSackTitleImage.png') }}">
+    <h1>A Comparative and Visual Analysis of Exact and Heuristic Algorithms for the Knapsack Problem</h1>
+</div>
+<div class="row">
+    <div class="column1">
+        <div class="algorithm form">
+            <form action="/submit" method="post" id="algorithm form" onsubmit="show_text()">
+                <div>
+                    <div id="problem_description_01">
+                        <!--0/1 Optimisation version of the knapsack problem-->
+                        <strong>Problem Description: </strong>
+                        <p id="problem_description">Given a set of 'n' items where each item 'i' has a weight and a value (w<sub>i</sub>, v<sub>i</sub>) and a knapsack with a maximum capacity 'W', what subset of items maximises the total value of the knapsack without exceeding it's weight limit.</p>
+                        <p id="math_notation">
+                            \[
+                            \begin{aligned}
+                            &\text{Maximize} && \sum_{i=1}^n v_i x_i \\
+                            &\text{subject to} && \sum_{i=1}^n w_i x_i \leq W, \\
+                            & && x_i \in \{0,1\}, \quad i = 1, \dots, n
+                            \end{aligned}
+                            \]
+                        </p>
+                    </div>
+                </div>
+                <strong>Algorithm: </strong>
+                <br>
+                <label for="algorithm_type">Choose an algorithm:</label>
+                <select name="algorithm_type" id="algorithm_type">
+                    <!--All the available algorithms loosely ordered by exact -> heuristic-->
+                    <option value="Randomised Search">Randomised Search</option>
+                    <option value="Brute Force (iterative)">Brute Force (iterative)</option>
+                    <option value="Brute Force (recursive)">Brute Force (recursive)</option>
+                    <option value="Greedy Approximation">Greedy Approximation</option>
+                    <option value="DP (Memoization)">DP (Memoization)</option>
+                    <option value="DP (Tabulation)">DP (Tabulation)</option>
+                    <option value="Branch and Bound">Branch and Bound</option>
+                    <option value="Genetic Algorithm">Genetic Algorithm</option>
+                    <option value="Ant Colony Optimisation">Ant Colony Optimisation</option>
+                    <option value="Simulated Annealing">Simulated Annealing</option>
+                    <option value="Tabu Search">Tabu Search</option>
+                    <option value="Particle Swarm Optimisation">Particle Swarm Optimisation</option>
+                </select>
+                <br>
+                <div id="0/1algorithms">
+                    <!--All algorithm descriptions and parameters-->
+                    <div class="algorithm" id="Randomised Search">
+                        <p class="algorithm-description">Uniformally generates random solutions over a given time period, and stores the best valid solution.</p>
+                        <div class="variable">
+                            <label for="time_limit">Search time limit: </label>
+                            <div class="slidecontainer">
+                                <input type="range" min="1" max="30" value="2" class="slider" name="time_limit">
+                            </div>
+                            <input type="number" class="slidevalue" min="1" max="30" value="2">
+                        </div>
+                    </div>
+                    <div class="algorithm" id="Brute Force (iterative)" style="display:none">
+                        <p class="algorithm-description">Loops in binary from 0 to 2<sup>n-1</sup> (over all possible individual subsets) and stores the best valid solution.</p>
+                        <p class="time-complexity">Time Complexity: \( \mathcal{O}(2^n) \)</p>
+                        <div class="variable">
+                            <label for="max_iterations_iterative">Max iterations: </label>
+                            <div class="slidecontainer">
+                                <input type="range" min="100" max="25000000" value="200000" class="slider" name="max_iterations_iterative">
+                            </div>
+                            <input type="number" class="slidevalue" min="100" max="25000000" value="200000">
+                        </div>
+                    </div>
+                    <div class="algorithm" id="Brute Force (recursive)" style="display:none">
+                        <p class="algorithm-description">Recursively solves the problem, by splitting it into smaller sub-problems, using the recursive idea below:</p>
+                        <!--Recursive description of the algorithm/problem-->
+                        <p>
+                            $$
+                            k(W, n) =
+                            \begin{cases}
+                            0, & \text{if } W \le 0 \ \text{or} \ n \ge N, \\[6pt]
+                            k(W,\, n+1), & \text{if } w_n > W, \\[6pt]
+                            \max\left(
+                            \underbrace{v_n + k(W - w_n,\, n+1)}_{\text{Include item}},\;
+                            \underbrace{k(W,\, n+1)}_{\text{Exclude item}}
+                            \right), & \text{otherwise}.
+                            \end{cases}
+                            $$
+                        </p>
+                        <p class="time-complexity">Time Complexity: \( \mathcal{O}(2^n) \)</p>
+                        <div class="variable">
+                            <label for="max_iterations_recursive">Recursion limit: </label>
+                            <div class="slidecontainer">
+                                <input type="range" min="1000" max="10000000" value="10000000" class="slider" name="max_iterations_recursive">
+                            </div>
+                            <input type="number" class="slidevalue" min="1000" max="10000000" value="10000000">
+                        </div>
+                    </div>
+                    <div class="algorithm" id="Greedy Approximation" style="display:none">
+                        <p class="algorithm-description">Sorts the items in descending order based upon their value/weight ratio. The algorithm then loops through the list until no more items can be packed.</p>
+                        <p class="time-complexity">Time Complexity: \( \mathcal{O}(nlogn) \)</p>
+                    </div>
+                    <div class="algorithm" id="DP (Memoization)" style="display:none">
+                        <p class="algorithm-description">Due to the problem having an overlapping sub-problem structure, the memoization technique stems from the recursive approach but caches the results of previous sub-problems, and looks them up before recomputing therefore avoiding redundant calculations.</p>
+                        <p class="time-complexity">Time Complexity: \( \mathcal{O}(nW) \)</p>
+                    </div>
+                    <div class="algorithm" id="DP (Tabulation)" style="display:none">
+                        <p class="algorithm-description">Tabulation creates a table and builds it up starting with resolving the smallest sub-problems until the main problem is solved.</p>
+                        <p class="time-complexity">Time Complexity: \( \mathcal{O}(nW) \)</p>
+                    </div>
+                    <div class="algorithm" id="Branch and Bound" style="display:none">
+                        <p class="algorithm-description">We use the greedy approach to generate upper and lower bounds for the knapsack problem, and then prune branches to reduce the search space. We always explore the most promising sub-problems first.</p>
+                    </div>
+                    <div class="algorithm" id="Simulated Annealing" style="display:none">
+                        <p class="algorithm-description">Annealing in metallurgy is when a material is first heated up to a high temperature and then cooled down slowly over time to achive a stable crystalline structure. The algorithm takes inspiration from this with the 'temperature' variable corresponding to the degree of randomness in the search process which will decrease over time to refine the solution. 'Alpha' is the factor by which the temperature reduces per iteration.</p>
+                        <label class="checkbox-container">Greedy Initialisation:
+                            <input name="is_greedy_SA" type="checkbox" checked>
+                            <span class="checkmark"></span>
+                        </label>
+                        <div class="variable">
+                            <label for="initial_temperature">Initial temperature: </label>
+                            <div class="slidecontainer">
+                                <input type="range" min="1" max="10" step="0.1" value="3.5" class="slider" name="initial_temperature">
+                            </div>
+                            <input type="number" class="slidevalue" min="1" max="10" step="0.1" value="3.5">
+                        </div>
+                        <div class="variable">
+                            <label for="minimum_temperature">Minimum temperature: </label>
+                            <div class="slidecontainer">
+                                <input type="range" min="0" max="1" step="0.1" value="0.4" class="slider" name="minimum_temperature">
+                            </div>
+                            <input type="number" class="slidevalue" min="0" max="1" step="0.1" value="0.4">
+                        </div>
+                        <div class="variable">
+                            <label for="alpha">Alpha: </label>
+                            <div class="slidecontainer">
+                                <input type="range" min="0.9" max="0.9999" step="0.0001" value="0.9995" class="slider" name="alpha">
+                            </div>
+                            <input type="number" class="slidevalue" min="0.9" max="0.9999" step="0.0001" value="0.9995">
+                        </div>
+                        <div class="variable">
+                            <label for="max_iterations_SA">Max iterations: </label>
+                            <div class="slidecontainer">
+                                <input type="range" min="1000" max="10000" value="3300" class="slider" name="max_iterations_SA">
+                            </div>
+                            <input type="number" class="slidevalue" min="1000" max="10000" value="3300">
+                        </div>
+                    </div>
+                    <div class="algorithm" id="Tabu Search" style="display:none">
+                        <p class="algorithm-description">Starts with a candidate solution and repeatedly finds the best neighbouring solution. Stores previously visited solutions in a tabu list to avoid getting trapped in a local optima.</p>
+                        <label class="checkbox-container">Greedy Initialisation:
+                            <input name="is_greedy_tabu" type="checkbox" checked>
+                            <span class="checkmark"></span>
+                        </label>
+                        <div class="variable">
+                            <label for="max_iterations_tabu_search">Max iterations: </label>
+                            <div class="slidecontainer">
+                                <input type="range" min="250" max="3000" value="1500" class="slider" name="max_iterations_tabu_search">
+                            </div>
+                            <input type="number" class="slidevalue" min="250" max="3000" value="1500">
+                        </div>
+                        <div class="variable">
+                            <label for="tabu_list_size">Tabu list size: </label>
+                            <div class="slidecontainer">
+                                <input type="range" min="10" max="1000" value="500" class="slider" name="tabu_list_size">
+                            </div>
+                            <input type="number" class="slidevalue" min="10" max="1000" value="500">
+                        </div>
+                    </div>
+                    <div class="algorithm" id="Particle Swarm Optimisation" style="display:none">
+                        <p class="algorithm-description">Inspired by natural life processes such as the social behaviour of birds flocking or fish schooling, a population (swarm) of candidate solutions is called particles, where each particle has a position and velocity value over the search space. Each particle is influenced by its own best and the global best known solution in order to explore the search space.</p>
+                        <div class="variable">
+                            <label for="max_iterations_PSO">Max iterations: </label>
+                            <div class="slidecontainer">
+                                <input type="range" min="10" max="300" value="55" class="slider" name="max_iterations_PSO">
+                            </div>
+                            <input type="number" class="slidevalue" min="10" max="300" value="55">
+                        </div>
+                        <div class="variable">
+                            <label for="population_size_PSO">Number of particles: </label>
+                            <div class="slidecontainer"> 
+                                <input type="range" min="10" max="300" value="35" class="slider" name="population_size_PSO">
+                            </div>
+                            <input type="number" class="slidevalue" min="10" max="300" value="35">
+                        </div>
+                        <div class="variable">
+                            <label for="inertia">Inertia: </label>
+                            <div class="slidecontainer">
+                                <input type="range" min="0" max="1" value="0.8"  step="0.01" class="slider" name="inertia">
+                            </div>
+                            <input type="number" class="slidevalue" min="0" max="1" value="0.8"  step="0.01">
+                        </div>
+                        <div class="variable">
+                            <label for="cognitive_factor">Cognitive factor: </label>
+                            <div class="slidecontainer">
+                                <input type="range" min="1" max="5" value="1.2" step="0.1" class="slider" name="cognitive_factor">
+                            </div>
+                            <input type="number" class="slidevalue" min="1" max="5" value="1.2" step="0.1">
+                        </div>
+                        <div class="variable">
+                            <label for="social_factor">Social factor: </label>
+                            <div class="slidecontainer">
+                                <input type="range" min="1" max="5" value="3" step="0.1" class="slider" name="social_factor">
+                            </div>
+                            <input type="number" class="slidevalue" min="1" max="5" value="3" step="0.1">
+                        </div>
+                        <div class="variable">
+                            <label for="steepness">Sigmoid function steepness: </label>
+                            <div class="slidecontainer">
+                                <input type="range" min="1" max="3" value="2.2" step="0.1" class="slider" name="steepness">
+                            </div>
+                            <input type="number" class="slidevalue" min="1" max="3" value="2.2" step="0.1">
+                        </div>
+                        <div class="variable">
+                            <label for="max_velocity">Maximum velocity: </label>
+                            <div class="slidecontainer">
+                                <input type="range" min="1" max="10" value="4.3" step="0.1" class="slider" name="max_velocity">
+                            </div>
+                            <input type="number" class="slidevalue" min="1" max="10" value="4.3" step="0.1">
+                        </div>
+                    </div>
+                    <div class="algorithm" id="Genetic Algorithm" style="display:none">
+                        <p class="algorithm-description">Simulates natural selection across multiple candidate solutions. Each generation, crossover between solutions and mutation occurs. Selection techniques combined with elitism are used to pick the best solutions for the next generation. This process repeats over a large number of generations, keeping track of the best valid solution.</p>
+                        <div class="variable">
+                            <label for="max_iterations_GA">Generations: </label>
+                            <div class="slidecontainer"> 
+                                <input type="range" min="50" max="300" value="100" class="slider" name="max_iterations_GA">
+                            </div>
+                            <input type="number" class="slidevalue" min="50" max="300" value="100">
+                        </div>
+                        <div class="variable">
+                            <label for="population_size_GA">Population size: </label>
+                            <div class="slidecontainer"> 
+                                <input type="range" min="10" max="300" value="50" class="slider" name="population_size_GA">
+                            </div>
+                            <input type="number" class="slidevalue" min="10" max="300" value="50">
+                        </div>
+                        <label for="selection_type_GA">Selection type:</label>
+                        <select name="selection_type_GA" id="selection_type_GA">
+                            <option value="Tournament selection">Tournament selection</option>
+                            <option value="Roulette wheel selection">Roulette wheel selection</option>
+                        </select>
+                        <div class="variable" id="tournament_size_variable">
+                            <label for="tournament_size_GA">Tournament size: </label>
+                            <div class="slidecontainer"> 
+                                <input type="range" min="1" max="20" value="9" class="slider" name="tournament_size_GA">
+                            </div>
+                            <input type="number" class="slidevalue" min="1" max="20" value="9">
+                        </div>
+                        <div class="variable">
+                            <label for="cross_over_rate">Cross over rate: </label>
+                            <div class="slidecontainer"> 
+                                <input type="range" min="0" max="1" value="0.6" step="0.01" class="slider" name="cross_over_rate">
+                            </div>
+                            <input type="number" class="slidevalue" min="0" max="1" value="0.6" step="0.01">
+                        </div>
+                        <div class="variable">
+                            <label for="mutation_rate">Mutation rate: </label>
+                            <div class="slidecontainer"> 
+                                <input type="range"  min="0" max="0.2" value="0.05" step="0.01" class="slider" name="mutation_rate">
+                            </div>
+                            <input type="number" class="slidevalue"  min="0" max="0.2" value="0.05" step="0.01">
+                        </div>
+                        <div class="variable">
+                            <label for="elitism_rate">Elitism rate: </label>
+                            <div class="slidecontainer"> 
+                                <input type="range" min="0" max="0.2" value="0.05" step="0.01" class="slider" name="elitism_rate">
+                            </div>
+                            <input type="number" class="slidevalue" min="0" max="0.2" value="0.05" step="0.01">
+                        </div>
+                    </div>
+                    <div class="algorithm" id="Ant Colony Optimisation" style="display:none">
+                        <p class="algorithm-description">ACO is inspired by the behaviour of ants when searching for food. Each ant lays down a pheremone trail (a type of hormone) when exploring a particular path. Over time, good/frequently chosen paths will accumulate pheromone, attracting more ants. Additionally, the choices a 'path' takes is influenced by other heuristic information (attractiveness). Evapouration of pheromone occurs, so that older suboptimal paths lose influence over time.</p>
+                        <div class="variable">
+                            <label for="max_iterations_ACO">Max iterations: </label>
+                            <div class="slidecontainer">
+                                <input type="range" min="1" max="100" value="11" class="slider" name="max_iterations_ACO">
+                            </div>
+                            <input type="number" class="slidevalue" min="1" max="100" value="11">
+                        </div>
+                        <div class="variable">
+                            <label for="ants">Number of ants: </label>
+                            <div class="slidecontainer">
+                                <input type="range" min="1" max="20" value="5" class="slider" name="ants">
+                            </div>
+                            <input type="number" class="slidevalue" min="1" max="20" value="5">
+                        </div>
+                        <div class="variable">
+                            <label for="alpha_ACO">Alpha: </label>
+                            <div class="slidecontainer">
+                                <input type="range" min="1" max="100" value="5" class="slider" name="alpha_ACO">
+                            </div>
+                            <input type="number" class="slidevalue" min="1" max="100" value="5">
+                        </div>
+                        <div class="variable">
+                            <label for="beta_ACO">Beta: </label>
+                            <div class="slidecontainer">
+                                <input type="range" min="1" max="100" value="1" class="slider" name="beta_ACO">
+                            </div>
+                            <input type="number" class="slidevalue" min="1" max="100" value="1">
+                        </div>
+                        <div class="variable">
+                            <label for="evapouration_rate">Evapouration rate: </label>
+                            <div class="slidecontainer">
+                                <input type="range" min="0" max="1" step="0.01" value="0.9" class="slider" name="evapouration_rate">
+                            </div>
+                            <input type="number" class="slidevalue" min="0" max="1" step="0.01" value="0.9">
+                        </div>
+                    </div>
+                </div>
+                <!--Used to store data values within the page (this is hidden from the user)-->
+                <div id="data" style="display:none">
+                    <textarea name="weights">{{ weights }}</textarea>
+                    <textarea name="values">{{ values }}</textarea>
+                    <textarea name="capacity">{{ capacity }}</textarea>
+                </div>
+            </form>
+        </div>
+        <br>
+        <strong>Data: </strong>
+        <div class="data form">
+            <!--Form initially submitted to generate/submit/upload data-->
+            <form method="post" id="data form" enctype="multipart/form-data" action = "/">
+                <label for="input_data">Input data:</label>
+                <select name="input_data" id="input_data">
+                    <option value="generate_random">Generate random</option>
+                    <option value="input_manually">Input manually</option>
+                    <option value="import_csv">Import CSV</option>
+                </select>
+                <div id="generate_random">
+                    <!-- This will having the following control variables: Number of items, Range of values, Correlation strength, Capacity Load-->
+                    <div class="variable">
+                        <label for="number_of_items">Number of items: </label>
+                        <div class="slidecontainer">
+                            <input type="range" min="5" max="1000" value="{{ number_of_items }}" class="slider" name="number_of_items">
+                        </div>
+                        <input type="number" class="slidevalue" min="5" max="1000" value="{{ number_of_items }}">
+                    </div>
+                    <div class="variable">
+                        <label for="range_of_values">Range of values: </label>
+                        <div class="slidecontainer">
+                            <input type="range" min="10" max="1000" value="{{ range_of_values }}" class="slider" name="range_of_values">
+                        </div>
+                        <input type="number" class="slidevalue" min="10" max="1000" value="{{ range_of_values }}">
+                    </div>
+                    <div class="variable">
+                        <label for="correlation_strength">Correlation strength: </label>
+                        <div class="slidecontainer">
+                            <input type="range" min="0" max="1" value="{{ correlation_strength }}" class="slider" name="correlation_strength" step="0.01">
+                        </div>
+                        <input type="number" class="slidevalue" min="0" max="1" value="{{ correlation_strength }}" step="0.01">
+                    </div>
+                    <div class="variable">
+                        <label for="capacity_load">Capacity load: </label>
+                        <div class="slidecontainer">
+                            <input type="range" min="0.1" max="0.9" value="{{ capacity_load }}" class="slider" name="capacity_load" step="0.01">
+                        </div>
+                        <input type="number" class="slidevalue" min="0.1" max="0.9" value="{{ capacity_load }}" step="0.01">
+                    </div>
+                </div>
+                <div id="input_manually" style="display:none">
+                    <br>
+                    <label for="weights">Enter the weights: </label>
+                    <input type="text" name="weights" placeholder="17 20 87 54 34">
+                    <br>
+                    <label for="values">Enter the values: </label>
+                    <input type="text" name="values" placeholder="20 24 12 87 45">
+                    <br>
+                    <label for="capacity">Enter the capacity:</label>
+                    <input type="text" name="capacity" placeholder="135">
+                    <br>
+                </div>
+                <div id="import_csv" style="display:none">
+                    <br>
+                    <p>You can upload a .csv file as input data when layed out in the following format: columns ('weights', 'values', 'capacity')</p>
+                    <input type="file" name="csv_file" accept=".csv">
+                    <p style="color: blue;">
+                        Choose csv file to upload
+                    </p>
+                </div>
+            </form>
+        </div>
+    </div>
+    <!--Capacity marker and scrollbox-->
+    <div class="column2">
+        <strong>Capacity:</strong> {{ capacity }}
+        <br>
+        <strong>Items (w<sub>i</sub>, v<sub>i</sub>):</strong>
+        <div class="scroll-box">
+            {% for i in range(weights|length) %}
+                <div class="item">Item {{ i + 1 }}: ({{ weights[i] }}, {{ values[i] }})</div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+<br>
+<div class="button_controls">
+    <button type="submit" form="data form" id="generate_data_button">Generate data</button>
+    <button type="submit" form="algorithm form">Run</button>
+</div>
+<div style="display:none" id="waiting_text">
+    <!--Running algorithm message is displayed to the user as some algorithms may take a significant time to load-->
+    <p class="message-text" >Running algorithm...</p>
+</div>
+<!--Error handling (Specific error message is inserted below)-->
+{% if error %}
+<p class="message-text">{{ error }}</p>
+{% endif %}
+<br>
+<script>
+    //Used to dynamically update the menus
+
+    //Stops submission on enter key press due to their being 2 forms
+    document.getElementById("algorithm form").addEventListener("keydown", function(event) {
+        if (event.key === "Enter"){
+            event.preventDefault()
+        }
+    });
+
+    document.getElementById("data form").addEventListener("keydown", function(event) {
+        if (event.key === "Enter"){
+            event.preventDefault()
+        }
+    });
+
+    //Matches the algorithm parameters to the algorithm selected
+    function change_algorithm_parameters () {
+        document.getElementById("0/1algorithms").querySelectorAll(".algorithm").forEach(algorithm_setting => {
+            if (algorithm_setting.id === dropdown_binary_algorithm.value) {
+                algorithm_setting.style.display = "inline";
+            }
+            else {
+                algorithm_setting.style.display = "none";
+            }
+        });
+    }
+
+    const dropdown_binary_algorithm = document.getElementById("algorithm_type");
+    dropdown_binary_algorithm.addEventListener("change", change_algorithm_parameters);
+
+    //Manually uses switch statement in order to match the form parameters for the input data type
+    const dropdown_input_data = document.getElementById("input_data");
+    const generate_random_menu = document.getElementById("generate_random");
+    const input_manually_menu = document.getElementById("input_manually");
+    const import_csv_menu = document.getElementById("import_csv");
+    const generate_data_button = document.getElementById("generate_data_button");
+
+    dropdown_input_data.addEventListener("change", function() {
+        generate_random_menu.style.display = "none";
+        input_manually_menu.style.display = "none";
+        import_csv_menu.style.display = "none";
+
+        if (this.value === 'generate_random') {
+            generate_random_menu.style.display = "inline";
+            generate_data_button.innerHTML = "Generate data";
+        }
+        else if (this.value === 'input_manually') {
+            input_manually_menu.style.display = "inline";
+            generate_data_button.innerHTML = "Submit data";
+        }
+        else if (this.value === 'import_csv') {
+            import_csv_menu.style.display = "inline";
+            generate_data_button.innerHTML = "Upload csv";
+        }
+    });
+
+    //Specific menus for genetic algorithms
+    const selection_type_GA = document.getElementById("selection_type_GA");
+    const tournament_size_variable = document.getElementById("tournament_size_variable");
+    selection_type_GA.addEventListener("change", function() {
+        if (this.value === "Tournament selection") {
+            tournament_size_variable.style.visibility = "initial";
+        }
+        else if (this.value === "Roulette wheel selection") {
+            tournament_size_variable.style.visibility = "hidden";
+        }
+    });
+
+    //Sync slider and textbox value
+    document.querySelectorAll(".variable").forEach(group => {
+        const slider = group.querySelector(".slidecontainer").querySelector("input[type=range]");
+        const number_input = group.querySelector(".slidevalue");
+
+        // Update number when slider changes
+        slider.addEventListener('input', function() {
+            number_input.value = slider.value;
+        });
+
+        // Update slider when number changes (with validation)
+        number_input.addEventListener('input', function() {
+            let value = number_input.value;
+            if (value < Number(slider.min)) value = slider.min;
+            if (value > Number(slider.max)) value = slider.max;
+            slider.value = value;
+            number_input.value = value;
+        });
+    });
+
+    const waiting_text = document.getElementById("waiting_text");
+
+    function show_text() {
+        waiting_text.style.display = "inline";
+    }
+
+    // Run when DOM is fully loaded (initial load)
+    document.addEventListener("DOMContentLoaded", function () {
+      runOnLoadOrBack();
+    });
+
+    // Run when page is shown
+    window.addEventListener("pageshow", function (event) {
+      if (event.persisted || performance.getEntriesByType("navigation")[0].type === "back_forward") {
+        runOnLoadOrBack();
+      }
+    });
+
+    //Hides the waiting text
+    function runOnLoadOrBack() {
+        waiting_text.style.display = "none";
+        change_algorithm_parameters();
+    }
+
+</script>
+
+{% endblock %}
